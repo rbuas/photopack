@@ -1,0 +1,23 @@
+{
+  "name": "tools.photopack",
+  "version": "1.0.0",
+  "description": "Photo pack generator",
+  "main": "",
+  "scripts": {
+    "start": "gulp build && http-server -p 8090",
+    "build": "gulp build",
+    "watch": "gulp watch",
+    "pack": "gulp pack"
+  },
+  "author": "Rodrigo Buas",
+  "license": "ISC",
+  "dependencies": {
+    "color-thief-jimp": "^2.0.2",
+    "fast-exif": "^0.2.0",
+    "image-size": "^0.5.1",
+    "moment": "^2.17.1",
+    "sax": "^1.2.2",
+    "sharp": "^0.17.2",
+    "yargs": "^6.6.0"
+  }
+}

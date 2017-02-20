@@ -1,0 +1,79 @@
+{
+    //path to original photos
+    "pathoriginal" : "C:/test", 
+    // packs to export
+    "packs" : {
+        "D0" : { 
+            "criterialogic" : "or", 
+            "criteria" : [
+                {"key":"tag", "value":"D0"}
+            ]
+        },
+        "106-AbbyMORGAN" : { 
+            "criterialogic" : "or", 
+            "criteria" : [
+                {"key":"tag", "value":"Abby MORGAN"}
+            ]
+        },
+        "314-MariKAWAGUCHI" : { 
+            "criterialogic" : "or", 
+            "criteria" : [
+                {"key":"tag", "value":"Mari KAWAGUCHI"}
+            ]
+        }
+    },
+    //export format for each pack in packs
+    "exportformats" : {
+        "hdclean-best" : {
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"rating", "value":4}
+            ]
+        },
+        "hdclean-others" : {
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"rating", "value":3},
+                {"key":"rating", "value":2}
+            ]
+        },
+        "web-best" : {
+            "resolution" : 2048,
+            "watermarks" : [
+                {"text" : "Prix de Lausanne 2017 / photo : rbuas"},
+                {"img" : "C:/test/watermark.png"}
+            ],
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"rating", "value":4}
+            ]
+        },
+        "web-others" : {
+            "resolution" : 2048,
+            "watermarks" : [
+                {"text" : "Prix de Lausanne 2017 / photo : rbuas"},
+                {"img" : "C:/test/watermark.png"}
+            ],
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"rating", "value":3},
+                {"key":"rating", "value":2}
+            ]
+        },
+        "webclean-best" : {
+            "resolution" : 2048,
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"rating", "value":4}
+            ]
+        },
+        "webclean-others" : {
+            "resolution" : 2048,
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"rating", "value":3},
+                {"key":"rating", "value":2}
+            ]
+        }
+    }
+}

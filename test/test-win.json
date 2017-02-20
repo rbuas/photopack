@@ -1,0 +1,79 @@
+{
+    "basepath" : "G:/tool.photopack/test/",
+    "originaldir" : "full",
+    "formats" : {
+        "hdclean-best" : {
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"authorrating", "value":5},
+                {"key":"authorrating", "value":4}
+            ]
+        },
+        "hdclean" : {
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"authorrating", "value":3},
+                {"key":"authorrating", "value":2}
+            ]
+        },
+        "web-best" : {
+            "width" : 2048,
+            "watermarks" : [
+                {"text" : "Prix de Lausanne 2017 / photo : rbuas"},
+                {"img" : "G:/tool.photopack/test/watermark.png"}
+            ],
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"authorrating", "value":4}
+            ]
+        },
+        "web" : {
+            "width" : 2048,
+            "watermarks" : [
+                {"text" : "Prix de Lausanne 2017 / photo : rbuas"},
+                {"img" : "G:/tool.photopack/test/watermark.png"}
+            ],
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"authorrating", "value":3},
+                {"key":"authorrating", "value":2}
+            ]
+        },
+        "webclean-best" : {
+            "width" : 2048,
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"authorrating", "value":4}
+            ]
+        },
+        "webclean" : {
+            "width" : 2048,
+            "criterialogic" : "or",
+            "criteria" : [
+                {"key":"authorrating", "value":3},
+                {"key":"authorrating", "value":2}
+            ]
+        }
+    },
+    "packs" : {
+        "Luna Ornellas" : { 
+            "criteria" : [
+                {"key":"tags", "value":"Luna Ornellas"}
+            ]
+        },
+        "rbuas-portfolio" : { 
+            "criterialogic" : "and", 
+            "criteria" : [
+                {"key":"tags", "value":"rbuas"},
+                {"key":"authorrating", "value":4}
+            ]
+        },
+        "rbuas-site" : { 
+            "criterialogic" : "and", 
+            "criteria" : [
+                {"key":"tags", "value":"rbuas"},
+                {"key":"authorrating", "value":5}
+            ]
+        }
+    }
+}
