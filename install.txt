@@ -1,0 +1,10 @@
+
+ON MAC :
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+brew install imagemagick
+brew install graphicsmagick
+brew install git
+
+cd INTALLATION_DIR
+git clone https://github.com/rbuas/photopack.git .
+npm update

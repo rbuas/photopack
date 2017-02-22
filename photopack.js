@@ -1,10 +1,13 @@
 /***
  * Generate photo pack
  * npm run photopack --config=C:/temp/pack2017.json
+ * 
+ * gravity : north, northeast, east, southeast, south, southwest, west, northwest, center and centre
  */
 var _moment = require("moment");
 var _path = require("path");
 var _argv = require("yargs").argv;
+var _gm = require("gm");
 
 var jsext = require(ROOT_DIR + "/jsext");
 var mediaext = require(ROOT_DIR + "/mediaext");
@@ -16,6 +19,7 @@ PhotoPack.ERROR = {
     INPUTFILE : "Missing input config file to generate packs",
     CONFIGFILE : "Config file error",
     PARAMS : "Missing required params",
+    GENPARAMS : "Missing required params to generate photo",
     OBJECTINSTANCE : "Missing object instance",
     ORIGINALPATH_NOTFOUND : "Can not found the specified original path directory",
     INPUTDIREMPTY : "Can not found any photos into the original path",
@@ -26,6 +30,7 @@ PhotoPack.READEDFILES = ["jpg"];
 
 PhotoPack.DEFAULTOPTIONS = {
     originaldir : "",
+    outputdir : "",
     basepath : "",
     readedfiles : PhotoPack.READEDFILES,
     watch : function(event, info, stack) {
@@ -59,7 +64,6 @@ PhotoPack.GeneratePacks = function (options) {
 
         self.pp.startProcess("photogeneration", "Generate photos into pack in formats");
         generatePackList(self, function(resp) {
-            //TOKEN
             self.pp.endProcess("photogeneration");
         });
     });
@@ -138,6 +142,7 @@ function readPhotosInfo (self, callback) {
             if(err || !mediainfo) {
                 stockError(self.photoerror, file, err || "Info read");
             } else {
+                mediainfo.filename = fileinput;
                 mediainfo.path = self.packconfig.originaldir;
                 mediainfo.lastscrap = Date.now();
                 self.photoinfo[file] = mediainfo;
@@ -282,7 +287,7 @@ function buildPacks (self, callback) {
 function generatePackList (self, callback) {
     if(!self)
         return response(self, callback, e(PhotoPack.ERROR.OBJECTINSTANCE));
-    
+
     if(!self.packconfig || !self.packconfig.packs)
         return response(self, callback, e(PhotoPack.ERROR.MISSINGPACKS));
 
@@ -290,20 +295,71 @@ function generatePackList (self, callback) {
         return response(self, callback);
 
     self.pp.startIterations("photogeneration", self.outPhotoCount);
-    //TODO
+    var pending = self.outPhotoCount;
+    Object.keys(self.packconfig.packs).forEach(function(pack, pIndex) {
+        var packConfig = self.packconfig.packs[pack];
+        if(!packConfig || !packConfig.outlist)
+            return;
+
+        //create directory util here
+        var packDir = _path.join(self.packconfig.basepath, self.packconfig.outputdir, pack);
+        jsext.mkdirRecursive(packDir);
+
+        Object.keys(packConfig.outlist).forEach(function(format, fIndex) {
+            var formatConfig = self.packconfig.formats[format];
+            var outlist = packConfig.outlist[format];
+            if(!formatConfig || !outlist)
+                return;
+
+            //create pack/format directory
+            var outDir = _path.join(packDir, format);
+            jsext.mkdirSync(outDir);
+
+            outlist.forEach(function(photo, index) {
+                var destination = _path.join(outDir, photo);
+                generatePhoto(self, photo, pack, format, destination, function() {
+                    self.pp.endIteration("photogeneration");
+                    if(--pending) response(self, callback);
+                });
+            });
+        })
+
+    });
 }
 
-function generatePhoto (self, photo, pack, format, callback) {
+function generatePhoto (self, photo, pack, format, destination, callback) {
     if(!self)
         return e(PhotoPack.ERROR.OBJECTINSTANCE);
 
     var formatConfig = self.packconfig.formats[format];
     var packConfig = self.packconfig.packs[pack];
     var photoInfo = self.photoinfo[photo];
+    if(!photoInfo || !formatConfig || !packConfig)
+        return e(PhotoPack.ERROR.GENPARAMS);
 
-    // generate photo into path pathdestination/pack/format/
-    var destination = _path.join(self.packconfig.basepath, pack, format);
-    mediaext.generateVersion(photoInfo.filename, formatConfig, destination, callback);
+    mediaext.generateVersion(photoInfo.filename, formatConfig, destination, function(err, info) {
+        if(err) return e(err, info);
+
+        if(formatConfig.watermarks) {
+            formatConfig.watermarks.forEach(function(watermark, index) {
+                var watermarkConfig = self.packconfig.watermarks[watermark];
+                if(!watermarkConfig) return e("watermark " + watermark + "not found");
+
+                if(watermarkConfig.img) {
+                    _gm(destination)
+                    .gravity(watermarkConfig.gravity || "SouthEast")
+                    .draw(['image Over 0,0 0,0 "' + watermarkConfig.img + '"'])
+                    .write(destination, function (err) {
+                        if(err) return e(err, destination);
+                    });
+                } else if (watermarkConfig.text) {
+                    //TODO
+                }
+            });
+        }
+
+        response(self, callback);
+    });
 }
 
 function stockSuccess (successlist, photo, pack, format) {

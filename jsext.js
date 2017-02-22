@@ -236,6 +236,35 @@ JsExt.listDir = function (path, extfilter) {
     return files;
 }
 
+JsExt.mkdirSync = function (dir) {
+    dir = _path.normalize(dir);
+    try {
+        _fs.mkdirSync(dir);
+    } catch(e) {
+        if ( e.code != 'EEXIST' ) throw e;
+    }
+}
+
+JsExt.mkdirRecursive = function (dir) {
+    dir = _path.normalize(dir);
+    var parts = dir.split(_path.sep);
+    if(!parts || !parts.length)
+        return;
+
+    var starter = "";
+
+    //traitement for mac or linux paths
+    if(!parts[0]) {
+        parts.shift();
+        starter = _path.sep;
+    }
+    for( var i = 1; i <= parts.length; i++ ) {
+        var partial = parts.slice(0, i);
+        var partialPath = starter + _path.join.apply(null, partial);
+        JsExt.mkdirSync( partialPath );
+    }
+}
+
 JsExt.listSubdir = function (path) {
     if(!path)
         return;

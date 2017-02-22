@@ -184,7 +184,7 @@ MediaExt.generateVersion = function (filepath, version, destination, callback) {
     if(!filepath || !version || !destination)
         return response(callback, "missing params", null);
 
-    var config = typeof(version) == "Object" ? version : MediaExt.VERSIONS[version];
+    var config = typeof(version) == "object" ? version : MediaExt.VERSIONS[version];
     if(!config)
         return response(callback, "unknown config", null);
 
@@ -195,10 +195,11 @@ MediaExt.generateVersion = function (filepath, version, destination, callback) {
         _fs.mkdirSync(destinationDir);
     }
 
-    _sharp(filepath)
-    .resize(config.width)
-    .quality(config.quality || 100)
-    .toFile(destination, function (err, info) {
+    var sharpfile = _sharp(filepath);
+    if(config.width) sharpfile.resize(config.width);
+    sharpfile.jpeg({quality:config.quality || 100});
+    sharpfile.withMetadata();
+    sharpfile.toFile(destination, function (err, info) {
         return response(callback, err, {version:version, info:info});
     });
 }
