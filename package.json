@@ -2,12 +2,10 @@
   "name": "tools.photopack",
   "version": "1.0.0",
   "description": "Photo pack generator",
-  "main": "",
+  "main": "node pp.js",
   "scripts": {
-    "start": "gulp build && http-server -p 8090",
-    "build": "gulp build",
-    "watch": "gulp watch",
-    "pack": "gulp pack"
+    "pp": "node pp.js",
+    "tmac": "node pp.js -- ./test/test-mac.json"
   },
   "author": "Rodrigo Buas",
   "license": "ISC",

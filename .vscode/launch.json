@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Photopack win",
             //"stopOnEntry": true,
-            "program": "${workspaceRoot}/main.js",
+            "program": "${workspaceRoot}/pp.js",
             "cwd": "${workspaceRoot}",
             "args":[
                 "${workspaceRoot}/test/test-win.json"
@@ -20,7 +20,7 @@
             "request": "launch",
             "name": "Photopack mac",
             //"stopOnEntry": true,
-            "program": "${workspaceRoot}/main.js",
+            "program": "${workspaceRoot}/pp.js",
             "cwd": "${workspaceRoot}",
             "args":[
                 "${workspaceRoot}/test/test-mac.json"

@@ -193,6 +193,38 @@ JsExt.loadJsonFile = function(file) {
     return fileobject;
 }
 
+JsExt.saveJsonFile = function(file, obj, space) {
+    if(!file || !obj)
+        return;
+
+    if(JsExt.fileExists(file)) {
+        console.log("Can not replace the file " + file + " it already exists");
+        return;
+    }
+
+    var content = JSON.stringify(obj, null, space);
+    _fs.writeFile(file, content, function (err) {
+        if (err) return console.log(err);
+    });
+}
+
+JsExt.fileExists = function(file) {
+    try {
+        var stats = _fs.statSync(path);
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+JsExt.removeFile = function(file) {
+    if(!JsExt.fileExists(file))
+        return;
+
+    _fs.unlinkSync(file);
+}
+
 JsExt.isDir = function (path) {
     if(!path)
         return false;

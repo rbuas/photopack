@@ -2,9 +2,18 @@ var _moment = require("moment");
 
 module.exports = ProcessProgress;
 
+ProcessProgress.DEFAULTOPTIONS = {
+    watch : function(event, info, message, stack) {
+        if(event == "next-iteration")
+            console.log(":: it ", message.itcurrent, "/", message.itmax, " - remaining : ", message.itpending, " about ", message.remainingtime);
+        else
+            console.log("::", event, info);
+    }
+};
+
 function ProcessProgress (options) {
     var self = this;
-    self.options = Object.assign({}, options);
+    self.options = Object.assign({}, ProcessProgress.DEFAULTOPTIONS, options);
     self.watchCallback = self.options.watch;
     self.stack = {};
 }
@@ -18,12 +27,12 @@ ProcessProgress.ERROR = {
     ITERATIONNOTSTARTED : "End iteration before start iterations"
 };
 
-ProcessProgress.prototype.broadcast = function (event, info) {
+ProcessProgress.prototype.broadcast = function (event, info, message) {
     var self = this;
     if(!self.watchCallback)
         return;
 
-    self.watchCallback(event, info, self.stack);
+    self.watchCallback(event, info, message, self.stack);
 }
 
 ProcessProgress.prototype.startProcess = function (processName, comment) {
@@ -35,7 +44,7 @@ ProcessProgress.prototype.startProcess = function (processName, comment) {
         return e(ProcessProgress.ERROR.PROCESSSTARTED);
 
     self.stack[processName] = new ProcessInfo(processName, comment);
-    self.broadcast("start-process", self.stack[processName], self.stack);
+    self.broadcast("start-process", processName, self.stack[processName]);
 }
 
 ProcessProgress.prototype.endProcess = function (processName) {
@@ -51,7 +60,7 @@ ProcessProgress.prototype.endProcess = function (processName) {
     if(error)
         return error;
 
-    self.broadcast("end-process", self.stack[processName], self.stack);
+    self.broadcast("end-process", processName, self.stack[processName]);
 }
 
 ProcessProgress.prototype.startIterations = function (processName, iterationCount) {
@@ -63,7 +72,27 @@ ProcessProgress.prototype.startIterations = function (processName, iterationCoun
     if(!process)
         return e(ProcessProgress.ERROR.MISSINGPROCESS, processName);
 
-    return process.startIterations();
+    var error = process.startIterations(iterationCount);
+    if(error)
+        return error;
+
+    self.broadcast("start-iteration", processName, self.stack[processName]);
+}
+
+ProcessProgress.prototype.nextIteration = function (processName) {
+    var self = this;
+    if(!processName)
+        return e(ProcessProgress.ERROR.PROCESSNAME);
+
+    var process = self.stack[processName];
+    if(!process)
+        return e(ProcessProgress.ERROR.MISSINGPROCESS, processName);
+
+    var error = process.nextIteration();
+    if(error)
+        return error;
+
+    self.broadcast("next-iteration", processName, self.stack[processName]);
 }
 
 ProcessProgress.prototype.endIteration = function (processName) {
@@ -75,7 +104,11 @@ ProcessProgress.prototype.endIteration = function (processName) {
     if(!process)
         return e(ProcessProgress.ERROR.MISSINGPROCESS, processName);
 
-    return process.endIteration();
+    var error = process.endIteration();
+    if(error)
+        return error;
+
+    self.broadcast("end-iteration", processName, self.stack[processName]);
 }
 
 
@@ -130,12 +163,12 @@ ProcessInfo.prototype.endIteration = function() {
 
 ProcessInfo.prototype.nextIteration = function (process) {
     var self = this;
-    var sum = self.iterations.reduce(function(prevIt, currentIt) {
-        return prevIt.duration + currentIt.duration;
-    });
+    var sum = self.iterations.reduce(function(total, currentIt) {
+        return total + currentIt.duration;
+    }, 0);
     self.averagetime = sum / (self.itcurrent + 1);
     self.itpending--;
-    self.remainingtime = --self.itpending * self.averagetime;
+    self.remainingtime = self.itpending * self.averagetime;
     self.iterations[++self.itcurrent] = new IterationInfo();
 }
 

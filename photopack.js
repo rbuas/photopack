@@ -23,7 +23,8 @@ PhotoPack.ERROR = {
     OBJECTINSTANCE : "Missing object instance",
     ORIGINALPATH_NOTFOUND : "Can not found the specified original path directory",
     INPUTDIREMPTY : "Can not found any photos into the original path",
-    MISSINGPACKS : "Missing pack config"
+    MISSINGPACKS : "Missing pack config",
+    NOPHOTOS : "Zero photos to generate"
 };
 
 PhotoPack.READEDFILES = ["jpg"];
@@ -33,8 +34,16 @@ PhotoPack.DEFAULTOPTIONS = {
     outputdir : "",
     basepath : "",
     readedfiles : PhotoPack.READEDFILES,
-    watch : function(event, info, stack) {
-        console.log("PHOTOPACK::", event, info);
+    exportindex : "index.json",
+    jsonspace : 3,
+    start : function(self) {
+        console.log("PHOTOPACK::start generate packs");
+    },
+    finish : function(self, resp) {
+        console.log("PHOTOPACK::finish generate packs");
+        console.log("PHOTPACK::SUCCESS: ", self.logsuccess);
+        console.log("PHOTPACK::ERROR: ", self.logerror);
+        logToFile(self, {success:self.logsuccess, error:self.logerror});
     }
 };
 
@@ -42,29 +51,40 @@ PhotoPack.GeneratePacks = function (options) {
     var self = this;
     self.options = Object.assign({}, PhotoPack.DEFAULTOPTIONS, options);
 
-    self.pp = new ProcessProgress({watch : self.options.watch});
+    self.pp = new ProcessProgress();
+
+    self.photoinfo = {};
+    self.logerror = [];
+    self.logsuccess = [];
+
+    callinfo(self, self.options.start);
 
     self.pp.startProcess("config", "Read photopack config");
     var errorConfig = readConfig(self);
     self.pp.endProcess("config");
-    if(errorConfig) return finishGeneration(self);
+    if(errorConfig) return callinfo(self, self.options.finish);
 
     self.pp.startProcess("photolist", "Read photos list from basepath/originaldir");
     var errorList = readPhotoList(self);
     self.pp.endProcess("photolist");
-    if(errorList) return finishGeneration(self);
+    if(errorList) return callinfo(self, self.options.finish);
 
     self.pp.startProcess("photoinfo", "Read photos infos from basepath/originaldir");
-    readPhotosInfo(self, function(resp) {
+    readPhotosInfo(self, function(error) {
         self.pp.endProcess("photoinfo");
+
+        self.pp.startProcess("exportindex", "Export photo index to basepath/index.json");
+        exportPhotoIndex(self);
+        self.pp.endProcess("exportindex");
 
         self.pp.startProcess("packlist", "Prepare pack lists");
         preparePackList(self);
         self.pp.endProcess("packlist");
 
         self.pp.startProcess("photogeneration", "Generate photos into pack in formats");
-        generatePackList(self, function(resp) {
+        generatePackList(self, function(error) {
             self.pp.endProcess("photogeneration");
+            return callinfo(self, self.options.finish, error);
         });
     });
 }
@@ -74,7 +94,10 @@ PhotoPack.GeneratePacks = function (options) {
 // PRIVATE FUNCTIONS
 
 function e (error, ext) {
-    console.log(error, ext);
+    if(ext != undefined)
+        console.log(error, ext);
+    else
+        console.log(error)
     return error;
 }
 
@@ -82,11 +105,8 @@ function response (self, callback, resp) {
     if(callback) callback(resp);
 }
 
-function finishGeneration (self) {
-    if(!self)
-        return;
-
-    console.log("PHOTOPACK::", self);
+function callinfo (self, callback, info) {
+    if(callback) callback(self, info);
 }
 
 function readConfig (self) {
@@ -116,7 +136,7 @@ function readPhotoList (self) {
     // read photo infos from photos in pathoriginal
     var originalpath = _path.normalize(_path.join(self.packconfig.basepath, self.packconfig.originaldir));
     if(!jsext.isDir(originalpath))
-        return e(PhotoPack.ERROR.ORIGINALPATH_NOTFOUND);
+        return e(PhotoPack.ERROR.ORIGINALPATH_NOTFOUND, originalpath);
 
     var files = jsext.listDir(originalpath, self.options.readedfiles);
     if(!files || files.length == 0)
@@ -127,39 +147,34 @@ function readPhotoList (self) {
 
 function readPhotosInfo (self, callback) {
     if(!self)
-        return e(PhotoPack.ERROR.OBJECTINSTANCE);
-
-    self.photoinfo = {};
-    self.photoerror = {};
+        return response(self, callback, e(PhotoPack.ERROR.OBJECTINSTANCE));
 
     self.pp.startIterations("photoinfo", self.originalphotos.length);
     var pending = self.originalphotos.length;
+    if(!pending)
+        return response(self, callback, e(PhotoPack.ERROR.INPUTDIREMPTY));
+
     self.originalphotos.forEach(function(file, index, arr) {
         var fileinput = _path.normalize(_path.join(self.packconfig.basepath, self.packconfig.originaldir, file));
         mediaext.readFile(fileinput, function(err, mediainfo) {
             --pending;
 
             if(err || !mediainfo) {
-                stockError(self.photoerror, file, err || "Info read");
+                stockError(self, file, "original", "*", err || "Info read");
             } else {
                 mediainfo.filename = fileinput;
                 mediainfo.path = self.packconfig.originaldir;
                 mediainfo.lastscrap = Date.now();
                 self.photoinfo[file] = mediainfo;
             }
-            self.pp.endIteration("photoinfo");
+            self.pp.nextIteration("photoinfo");
 
-            if(pending <= 0) response(self, callback);
+            if(pending <= 0) {
+                self.pp.endIteration("photoinfo");
+                return response(self, callback);
+            }
         });
     });
-}
-
-function stockError (stock, ref, error) {
-    if(!stock)
-        return;
-
-    stock[ref] = stock[ref] || [];
-    stock[ref].push(error);
 }
 
 function preparePackList (self) {
@@ -175,19 +190,20 @@ function preparePackList (self) {
         Object.keys(self.packconfig.formats).forEach(function(format, fIndex) {
             var formatConfig = self.packconfig.formats[format];
 
-            console.log("PHOTOPACK::filterphotos to ", pack, "in format", format, packConfig.criteria, formatConfig.criteria);
+            //TRACE console.log("PHOTOPACK::filterphotos to ", pack, "in format", format, packConfig.criteria, formatConfig.criteria);
             var outlist = filterPhotos(self.photoinfo, packConfig.criterialogic, packConfig.criteria, formatConfig.criterialogic, formatConfig.criteria);
             var outlistIds = outlist && Object.keys(outlist);
-            console.log("PHOTOPACK::outlist", outlistIds);
+            //TRACE console.log("PHOTOPACK::outlist", outlistIds);
 
             if(outlistIds && outlistIds.length) {
                 packConfig.outlist[format] = outlistIds;
                 outPhotoCount += outlistIds && outlistIds.length;
             }
             
-            self.pp.endIteration("packlist");
+            self.pp.nextIteration("packlist");
         });
     });
+    self.pp.endIteration("packlist");
 
     self.outPhotoCount = outPhotoCount;
 }
@@ -255,35 +271,6 @@ function validCriteriaItem (photo, criteria) {
     }
 }
 
-function buildPacks (self, callback) {
-    if(!self)
-        return e(PhotoPack.ERROR.OBJECTINSTANCE);
-
-    self.pp.startIterations("photogeneration", self.outPhotoCount);
-    self.outerror = {};
-    self.outsuccess = {};
-    var pending = self.outPhotoCount;
-    Object.keys(self.packconfig.packs).forEach(function(pack, pIndex) {
-        var packConfig = self.packconfig.packs[pack];
-        Object.keys(packConfig.outlist).forEach(function(format, fIndex) {
-            packConfig.outlist[format].forEach(function(photo) {
-                generatePhoto(self, photo, pack, format, function(err, info) {
-                    --pending;
-
-                    if(err || !info) {
-                        stockError(self.outerror, photo, err || "Generate");
-                    } else {
-                        stockSuccess(self.outsuccess, photo, pack, format);
-                    }
-                    self.pp.endIteration("photogeneration");
-
-                    if(pending <= 0) response(self, callback);
-                });
-            });
-        });
-    });
-}
-
 function generatePackList (self, callback) {
     if(!self)
         return response(self, callback, e(PhotoPack.ERROR.OBJECTINSTANCE));
@@ -317,51 +304,99 @@ function generatePackList (self, callback) {
 
             outlist.forEach(function(photo, index) {
                 var destination = _path.join(outDir, photo);
-                generatePhoto(self, photo, pack, format, destination, function() {
-                    self.pp.endIteration("photogeneration");
-                    if(--pending) response(self, callback);
+                generatePhoto(self, photo, pack, format, destination, function(error) {
+                    if(error) {
+                        stockError(self, photo, pack, format, error);
+                    } else {
+                        stockSuccess(self, photo, pack, format);
+                    }
+                    self.pp.nextIteration("photogeneration");
+                    if(--pending <= 0) {
+                        self.pp.endIteration("photogeneration");
+                        response(self, callback);
+                    }
                 });
             });
-        })
-
+        });
     });
 }
 
 function generatePhoto (self, photo, pack, format, destination, callback) {
     if(!self)
-        return e(PhotoPack.ERROR.OBJECTINSTANCE);
+        return response(self, callback, e(PhotoPack.ERROR.OBJECTINSTANCE));
 
     var formatConfig = self.packconfig.formats[format];
     var packConfig = self.packconfig.packs[pack];
     var photoInfo = self.photoinfo[photo];
     if(!photoInfo || !formatConfig || !packConfig)
-        return e(PhotoPack.ERROR.GENPARAMS);
+        return response(self, callback, e(PhotoPack.ERROR.GENPARAMS));
 
     mediaext.generateVersion(photoInfo.filename, formatConfig, destination, function(err, info) {
-        if(err) return e(err, info);
+        if(err) return response(self, callback, e(err, info));
 
         if(formatConfig.watermarks) {
+            var errors = [];
             formatConfig.watermarks.forEach(function(watermark, index) {
                 var watermarkConfig = self.packconfig.watermarks[watermark];
-                if(!watermarkConfig) return e("watermark " + watermark + "not found");
+                if(!watermarkConfig) return response(self, callback, e("watermark " + watermark + "not found"));
 
-                if(watermarkConfig.img) {
-                    _gm(destination)
-                    .gravity(watermarkConfig.gravity || "SouthEast")
-                    .draw(['image Over 0,0 0,0 "' + watermarkConfig.img + '"'])
-                    .write(destination, function (err) {
-                        if(err) return e(err, destination);
-                    });
-                } else if (watermarkConfig.text) {
-                    //TODO
-                }
+                stumpWatermark(destination, watermarkConfig, function (err) {
+                    if(err) errors.push(err);
+                });
             });
+            if(errors.length) return response(self, callback, e(err, destination));
         }
 
-        response(self, callback);
+        return response(self, callback, null);
     });
 }
 
-function stockSuccess (successlist, photo, pack, format) {
-    successlist.push({o:photo, p:pack, f:format});
+function stumpWatermark (destination, watermarkConfig, callback) {
+    if(!destination || !watermarkConfig)
+        return;
+
+    if(watermarkConfig.img) {
+        var offsetx = watermarkConfig.x || 0;
+        var offsety = watermarkConfig.y || 0;
+        var w = watermarkConfig.w || 0;
+        var h = watermarkConfig.h || 0;
+        var gravity = watermarkConfig.gravity || "SouthEast";
+        var wmCommand = 'image Over ' + offsetx + ',' + offsety + ' ' + w + ',' + h + ' -dissolve 25% "' + watermarkConfig.img + '"';
+
+        _gm(destination)
+        .gravity(gravity)
+        .draw([wmCommand])
+        .write(destination, callback);
+    } else if (watermarkConfig.text) {
+        //TODO
+    }
+}
+
+function stockError (self, photo, pack, format, error) {
+    if(!self || !self.logerror)
+        return;
+
+    self.logerror.push({o:photo, p:pack, f:format, e:error});
+}
+
+function stockSuccess (self, photo, pack, format) {
+    if(!self || !self.logsuccess)
+        return;
+
+    self.logsuccess.push({o:photo, p:pack, f:format});
+}
+
+function logToFile (self, obj) {
+    var now = _moment().format("YYYYMMDDhhmmss");
+    var filename = _path.join(self.packconfig.basepath, now) + ".log";
+    jsext.saveJsonFile(filename, obj, self.options.jsonspace);
+}
+
+function exportPhotoIndex (self) {
+    if(!self || !self.options || !self.options.exportindex || !self.photoinfo)
+        return;
+
+    var filename = _path.join(self.packconfig.basepath, self.options.exportindex);
+    jsext.removeFile(filename);
+    jsext.saveJsonFile(filename, self.photoinfo, self.options.jsonspace);
 }
