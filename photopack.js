@@ -4,14 +4,16 @@
  * 
  * gravity : north, northeast, east, southeast, south, southwest, west, northwest, center and centre
  */
-var _moment = require("moment");
-var _path = require("path");
-var _argv = require("yargs").argv;
-var _gm = require("gm");
+const _moment = require("moment");
+const _path = require("path");
+const _argv = require("yargs").argv;
+const _gm = require("gm");
+const _fs = require("fs");
+const _spawn = require('child_process').spawn;
 
-var jsext = require(ROOT_DIR + "/jsext");
-var mediaext = require(ROOT_DIR + "/mediaext");
-var ProcessProgress = require(ROOT_DIR + "/processprogress");
+const jsext = require(ROOT_DIR + "/jsext");
+const mediaext = require(ROOT_DIR + "/mediaext");
+const ProcessProgress = require(ROOT_DIR + "/processprogress");
 
 module.exports = PhotoPack = {};
 
@@ -351,21 +353,38 @@ function generatePhoto (self, photo, pack, format, destination, callback) {
     });
 }
 
-function stumpWatermark (destination, watermarkConfig, callback) {
-    if(!destination || !watermarkConfig)
+function stumpWatermark (origin, watermarkConfig, callback) {
+    if(!origin || !watermarkConfig)
         return;
 
+    var destination = origin;
     if(watermarkConfig.img) {
         var offsetx = watermarkConfig.x || 0;
         var offsety = watermarkConfig.y || 0;
         var w = watermarkConfig.w || 0;
         var h = watermarkConfig.h || 0;
         var gravity = watermarkConfig.gravity || "SouthEast";
-        var wmCommand = 'image Over ' + offsetx + ',' + offsety + ' ' + w + ',' + h + ' -dissolve 25% "' + watermarkConfig.img + '"';
 
-        _gm(destination)
+        var command = 'image Over '
+                    + offsetx + ',' + offsety + ' ' 
+                    + w + ',' + h + ' '
+                    + '"' + watermarkConfig.img + '" '
+                    ;
+        console.log("command : ", command);
+
+var writeStream = _fs.createReadStream(destination);
+        _gm(origin)
+        //.composite(watermarkConfig.img)
+        //.geometry('+100+150')
         .gravity(gravity)
-        .draw([wmCommand])
+        .draw([command])
+// .magnify()
+// .blur(7, 3)
+// .edge(3)
+// .stroke("#ffffff")
+// .drawCircle(10, 10, 20, 10)
+// .drawText(300, 200, "GMagick!")
+//.charcoal()
         .write(destination, callback);
     } else if (watermarkConfig.text) {
         //TODO
