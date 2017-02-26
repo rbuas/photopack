@@ -9,7 +9,7 @@ const _path = require("path");
 const _argv = require("yargs").argv;
 const _gm = require("gm");
 const _fs = require("fs");
-const _spawn = require('child_process').spawn;
+const _cmd = require("child_process").execFile;
 
 const jsext = require(ROOT_DIR + "/jsext");
 const mediaext = require(ROOT_DIR + "/mediaext");
@@ -364,28 +364,51 @@ function stumpWatermark (origin, watermarkConfig, callback) {
         var w = watermarkConfig.w || 0;
         var h = watermarkConfig.h || 0;
         var gravity = watermarkConfig.gravity || "SouthEast";
+        var dissolve = watermarkConfig.dissolve || 50;
 
-        var command = 'image Over '
-                    + offsetx + ',' + offsety + ' ' 
-                    + w + ',' + h + ' '
-                    + '"' + watermarkConfig.img + '" '
-                    ;
-        console.log("command : ", command);
+        var command = "/usr/local/bin/composite";
+        var commandargs = [
+            //, (dissolve ? '-dissolve ' + dissolve : '')
+            //, (gravity ? '-gravity ' + gravity : '')
+            //, offsetx + ',' + offsety
+            //, w + ',' + h
+            , '"' + watermarkConfig.img + '"'
+            , '"' + origin + '"'
+            , (dissolve ? ' -alpha Set' : '')
+            , '"' + destination + "-sign.jpg" + '"'
+        ];
+        console.log("command : ", command, commandargs.join(" "));
+        var composite = _cmd(command, commandargs);
 
-var writeStream = _fs.createReadStream(destination);
-        _gm(origin)
+        composite.stdout.on('data',function(data){
+            console.log("stdout", data);
+        });
+
+        composite.stderr.on('data',function(data){
+            console.log("stderr", data);
+        });
+
+        composite.on('close',function(code){
+            if(code != 0){
+                console.log('onexit : composite process exited with code ' + code);
+            } else {
+                console.log("composite end");
+            } 
+        });
+        // var writeStream = _fs.createReadStream(destination);
+        //_gm(origin)
         //.composite(watermarkConfig.img)
         //.geometry('+100+150')
-        .gravity(gravity)
-        .draw([command])
-// .magnify()
-// .blur(7, 3)
-// .edge(3)
-// .stroke("#ffffff")
-// .drawCircle(10, 10, 20, 10)
-// .drawText(300, 200, "GMagick!")
-//.charcoal()
-        .write(destination, callback);
+        //.gravity(gravity)
+        //.draw([command])
+        // .magnify()
+        // .blur(7, 3)
+        // .edge(3)
+        // .stroke("#ffffff")
+        // .drawCircle(10, 10, 20, 10)
+        // .drawText(300, 200, "GMagick!")
+        //.charcoal()
+        //.write(destination, callback);
     } else if (watermarkConfig.text) {
         //TODO
     }
