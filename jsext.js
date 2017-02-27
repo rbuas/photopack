@@ -1,6 +1,7 @@
 var _querystring = require("querystring");
 var _fs = require("fs");
 var _path = require("path");
+var _os = require("os");
 
 module.exports = JsExt = {};
 
@@ -286,6 +287,9 @@ JsExt.mkdirRecursive = function (dir) {
     var starter = "";
 
     //traitement for mac or linux paths
+    if(_os.platform() == "win32") {
+        starter = parts.shift() + _path.sep;
+    } else 
     if(!parts[0]) {
         parts.shift();
         starter = _path.sep;

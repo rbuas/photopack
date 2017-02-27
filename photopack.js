@@ -26,7 +26,8 @@ PhotoPack.ERROR = {
     ORIGINALPATH_NOTFOUND : "Can not found the specified original path directory",
     INPUTDIREMPTY : "Can not found any photos into the original path",
     MISSINGPACKS : "Missing pack config",
-    NOPHOTOS : "Zero photos to generate"
+    NOPHOTOS : "Zero photos to generate",
+    WATERMARKCONFIG : "Missing watermark config"
 };
 
 PhotoPack.READEDFILES = ["jpg"];
@@ -285,7 +286,11 @@ function generatePackList (self, callback) {
 
     self.pp.startIterations("photogeneration", self.outPhotoCount);
     var pending = self.outPhotoCount;
-    Object.keys(self.packconfig.packs).forEach(function(pack, pIndex) {
+    var packNames = Object.keys(self.packconfig.packs);
+    if(!packNames || !packNames.length)
+        return response(self, callback);
+
+    packNames.forEach(function(pack, pIndex) {
         var packConfig = self.packconfig.packs[pack];
         if(!packConfig || !packConfig.outlist)
             return;
@@ -340,9 +345,9 @@ function generatePhoto (self, photo, pack, format, destination, callback) {
             var errors = [];
             formatConfig.watermarks.forEach(function(watermark, index) {
                 var watermarkConfig = self.packconfig.watermarks[watermark];
-                if(!watermarkConfig) return response(self, callback, e("watermark " + watermark + "not found"));
+                if(!watermarkConfig) return response(self, callback, e(PhotoPack.ERROR.WATERMARKCONFIG, "watermark " + watermark + "not found"));
 
-                stumpWatermark(destination, watermarkConfig, function (err) {
+                stumpWatermark(self, destination, watermarkConfig, function (err) {
                     if(err) errors.push(err);
                 });
             });
@@ -353,11 +358,15 @@ function generatePhoto (self, photo, pack, format, destination, callback) {
     });
 }
 
-function stumpWatermark (origin, watermarkConfig, callback) {
-    if(!origin || !watermarkConfig)
-        return;
+function stumpWatermark (self, origin, watermarkConfig, callback) {
+    if(!self)
+        return response(self, callback, e(PhotoPack.ERROR.OBJECTINSTANCE));
 
-    var destination = origin;
+    var im = self.packconfig.im;
+    if(!origin || !watermarkConfig || !im)
+        return response(self, callback, e(PhotoPack.ERROR.WATERMARKCONFIG));
+
+    var destination = origin + "-wm.jpg";
     if(watermarkConfig.img) {
         var offsetx = watermarkConfig.x || 0;
         var offsety = watermarkConfig.y || 0;
@@ -366,16 +375,17 @@ function stumpWatermark (origin, watermarkConfig, callback) {
         var gravity = watermarkConfig.gravity || "SouthEast";
         var dissolve = watermarkConfig.dissolve || 50;
 
-        var command = "/usr/local/bin/composite";
+        var command = im ? _path.join(im) : "composite";
         var commandargs = [
+            "composite"
             //, (dissolve ? '-dissolve ' + dissolve : '')
             //, (gravity ? '-gravity ' + gravity : '')
             //, offsetx + ',' + offsety
             //, w + ',' + h
-            , '"' + watermarkConfig.img + '"'
-            , '"' + origin + '"'
-            , (dissolve ? ' -alpha Set' : '')
-            , '"' + destination + "-sign.jpg" + '"'
+            , watermarkConfig.img
+            , origin
+            //, (dissolve ? ' -alpha Set' : '')
+            , destination
         ];
         console.log("command : ", command, commandargs.join(" "));
         var composite = _cmd(command, commandargs);
@@ -392,7 +402,7 @@ function stumpWatermark (origin, watermarkConfig, callback) {
             if(code != 0){
                 console.log('onexit : composite process exited with code ' + code);
             } else {
-                console.log("composite end");
+                console.log("composite end", code);
             } 
         });
         // var writeStream = _fs.createReadStream(destination);

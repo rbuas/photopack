@@ -1,4 +1,5 @@
 {
+    "im" : "/usr/local/bin/composite",
     "basepath" : "/Users/rbuas/RBUAS/weblabs/tool.photopack/test",
     "originaldir" : "full",
     "outputdir" : "packs",
