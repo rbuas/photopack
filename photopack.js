@@ -377,7 +377,7 @@ function stumpWatermark (self, origin, watermarkConfig, callback) {
 
         var command = im ? _path.join(im) : "composite";
         var commandargs = [
-            "composite"
+            "-composite"
             //, (dissolve ? '-dissolve ' + dissolve : '')
             //, (gravity ? '-gravity ' + gravity : '')
             //, offsetx + ',' + offsety
@@ -391,34 +391,20 @@ function stumpWatermark (self, origin, watermarkConfig, callback) {
         var composite = _cmd(command, commandargs);
 
         composite.stdout.on('data',function(data){
-            console.log("stdout", data);
+            console.log("PHOTOPACK: stdout", data);
         });
 
         composite.stderr.on('data',function(data){
-            console.log("stderr", data);
+            console.log("PHOTOPACK: stderr", data);
         });
 
         composite.on('close',function(code){
             if(code != 0){
-                console.log('onexit : composite process exited with code ' + code);
+                console.log("PHOTOPACK: composite process exited with code", code);
             } else {
-                console.log("composite end", code);
+                console.log("PHOTOPACK: composite end", code);
             } 
         });
-        // var writeStream = _fs.createReadStream(destination);
-        //_gm(origin)
-        //.composite(watermarkConfig.img)
-        //.geometry('+100+150')
-        //.gravity(gravity)
-        //.draw([command])
-        // .magnify()
-        // .blur(7, 3)
-        // .edge(3)
-        // .stroke("#ffffff")
-        // .drawCircle(10, 10, 20, 10)
-        // .drawText(300, 200, "GMagick!")
-        //.charcoal()
-        //.write(destination, callback);
     } else if (watermarkConfig.text) {
         //TODO
     }

@@ -1,5 +1,5 @@
 {
-    "im" : "/usr/local/bin/composite",
+    "im" : "/usr/local/bin/magick",
     "basepath" : "/Users/rbuas/RBUAS/weblabs/tool.photopack/test",
     "originaldir" : "full",
     "outputdir" : "packs",
