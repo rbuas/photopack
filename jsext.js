@@ -211,7 +211,7 @@ JsExt.saveJsonFile = function(file, obj, space) {
 
 JsExt.fileExists = function(file) {
     try {
-        var stats = _fs.statSync(path);
+        var stats = _fs.statSync(file);
         return true;
     }
     catch (e) {
