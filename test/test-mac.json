@@ -55,7 +55,13 @@
         "pdl2017-rbuas" : {
             "text" : "Prix de Lausanne 2017 / photo : rbuas",
             "gravity" : "southeast",
-            "dissolve" : 95
+            "dissolve" : 50,
+            "w" : 700,
+            "h" : 40,
+            "x" : 10,
+            "y" : 10,
+            "fontsize" : 35,
+            "fonttype" : "Myriad Web Pro"
         },
         "pdl2017-logo" : {
             "img" : "/Users/rbuas/RBUAS/weblabs/tool.photopack/test/pdl-watermark.png", 
