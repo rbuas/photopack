@@ -400,21 +400,21 @@ function stumpWatermark (self, image, watermarks, index) {
         var composite = _cmd(command + " " + commandargs);
 
         composite.stdout.on('data',function(data) {
-            console.log("PHOTOPACK: error", data);
+            console.log("PHOTOPACK: watermark error", data);
             //return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
         });
 
         composite.stderr.on('data',function(data) {
-            console.log("PHOTOPACK: error", data);
+            console.log("PHOTOPACK: watermark error", data);
             //return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
         });
 
         composite.on('close',function(code) {
             if(code != 0){
-                console.log("PHOTOPACK: composite process exited with code", code);
+                console.log("PHOTOPACK: watermark process error :", code);
                 return reject(e(PhotoPack.ERROR.IMPROCCESS, code));
             } else {
-                console.log("PHOTOPACK: composite end", code);
+                console.log("PHOTOPACK: watermark process success");
                 return resolve(image);
             }
         });
@@ -495,6 +495,7 @@ function stockSuccess (self, photo, pack, format) {
 }
 
 function logToFile (self, obj) {
+    if(!self || !self.packconfig) return;
     var now = _moment().format("YYYYMMDDhhmmss");
     var filename = _path.join(self.packconfig.basepath, now) + ".log";
     jsext.saveJsonFile(filename, obj, self.options.jsonspace);

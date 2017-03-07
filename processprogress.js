@@ -4,10 +4,11 @@ module.exports = ProcessProgress;
 
 ProcessProgress.DEFAULTOPTIONS = {
     watch : function(event, info, message, stack) {
-        if(event == "next-iteration")
-            console.log(":: it ", message.itcurrent, "/", message.itmax, " - remaining : ", message.itpending, " about ", message.remainingtime);
-        else
+        if(event == "next-iteration") {
+            printITProgress(message);
+        } else {
             console.log("::", event, info);
+        }
     }
 };
 
@@ -163,6 +164,8 @@ ProcessInfo.prototype.endIteration = function() {
 
 ProcessInfo.prototype.nextIteration = function (process) {
     var self = this;
+    var currentit = self.iterations[self.itcurrent];
+    if(currentit) currentit.finish();
     var sum = self.iterations.reduce(function(total, currentIt) {
         return total + currentIt.duration;
     }, 0);
@@ -198,4 +201,18 @@ IterationInfo.prototype.finish = function () {
 function e (error, ext) {
     console.log(error, ext);
     return error;
+}
+
+function printITProgress(message) {
+    if(!message || !message.itmax)
+        return;
+
+    console.log(":: it ", message.itcurrent, "/", message.itmax, " done - ", message.itpending, " (", (message.remainingtime / 1000).toFixed(2), "s ) to finish");
+
+    var progressporcent = 100 * message.itcurrent / message.itmax;
+    var progress = "";
+    for(var i = 0 ; i < 100; i++) {
+        progress += (i < progressporcent) ? ":" : ".";
+    }
+    console.log(progress);
 }
