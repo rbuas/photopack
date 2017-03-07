@@ -11,9 +11,7 @@
             //"stopOnEntry": true,
             "program": "${workspaceRoot}/pp.js",
             "cwd": "${workspaceRoot}",
-            "args":[
-                "${workspaceRoot}/test/test-win.json"
-            ]
+            "args":["${workspaceRoot}/test/test-win.json"]
         },
         {
             "type": "node",

@@ -1,5 +1,5 @@
 {
-    "im": "C:/Program Files/ImageMagick-7.0.5-Q16/magick.exe",
+    "im": "magick",
     "basepath" : "C:/TF/test/test/",
     "originaldir" : "full",
     "outputdir" : "packs",
@@ -20,7 +20,7 @@
         },
         "web-best" : {
             "width" : 2048,
-            "watermarks" : ["pdl2017-rbuas", "pdl2017-logo"],
+            "watermarks" : ["pdl2017-rbuas", "pdl2017-logo", "rbuas-logo"],
             "criterialogic" : "or",
             "criteria" : [
                 {"key":"authorrating", "value":4}
@@ -52,15 +52,33 @@
         }
     },
     "watermarks" : {
-        "pdl2017-rbuas" : {"text" : "Prix de Lausanne 2017 / photo : rbuas"},
+        "pdl2017-rbuas" : {
+            "text" : "Prix de Lausanne 2017 / photo : rbuas",
+            "gravity" : "southeast",
+            "dissolve" : 95
+        },
         "pdl2017-logo" : {
-            "img" : "C:/TF/test/test/watermark.png", 
-            "gravity" : "northeast",
+            "img" : "C:/TF/test/test/pdl-watermark.png", 
+            "gravity" : "northwest",
+            "w" : 400,
+            "h" : 400,
+            "x" : 10,
+            "y" : 10,
+            "dissolve" : 100
+        },
+        "rbuas-logo" : {
+            "img" : "C:/TF/test/test/rbuas-watermark-w.png", 
+            "gravity" : "southwest",
             "w" : 300,
-            "h" : 140
+            "h" : 140,
+            "dissolve" : 60
         }
     }, 
     "packs" : {
+        "all" : { 
+            "criteria" : [
+            ]
+        },
         "LunaOrnellas" : { 
             "criteria" : [
                 {"key":"tags", "value":"Luna Ornellas"}

@@ -1,5 +1,5 @@
 {
-    "im" : "/usr/local/bin/magick",
+    "im" : "magick",
     "basepath" : "/Users/rbuas/RBUAS/weblabs/tool.photopack/test",
     "originaldir" : "full",
     "outputdir" : "packs",
@@ -28,7 +28,7 @@
         },
         "web" : {
             "width" : 2048,
-            "watermarks" : ["pdl2017-rbuas", "pdl2017-logo"],
+            "watermarks" : ["pdl2017-rbuas", "pdl2017-logo", "rbuas-logo"],
             "criterialogic" : "or",
             "criteria" : [
                 {"key":"authorrating", "value":3},
@@ -69,9 +69,11 @@
         "rbuas-logo" : {
             "img" : "/Users/rbuas/RBUAS/weblabs/tool.photopack/test/rbuas-watermark-w.png", 
             "gravity" : "southwest",
-            "w" : 300,
-            "h" : 140,
-            "dissolve" : 60
+            "w" : 160,
+            "h" : 50,
+            "x" : 10,
+            "y" : 15,
+            "dissolve" : 50
         }
     }, 
     "packs" : {

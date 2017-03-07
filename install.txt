@@ -7,4 +7,4 @@ brew install git
 
 cd INTALLATION_DIR
 git clone https://github.com/rbuas/photopack.git .
-npm update
+npm install

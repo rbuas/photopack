@@ -342,81 +342,105 @@ function generatePhoto (self, photo, pack, format, destination, callback) {
     mediaext.generateVersion(photoInfo.filename, formatConfig, destination, function(err, info) {
         if(err) return response(self, callback, e(err, info));
 
-        if(formatConfig.watermarks) {
-            var errors = [];
-            formatConfig.watermarks.forEach(function(watermark, index) {
-                var watermarkConfig = self.packconfig.watermarks[watermark];
-                if(!watermarkConfig) return response(self, callback, e(PhotoPack.ERROR.WATERMARKCONFIG, "watermark " + watermark + "not found"));
-
-                stumpWatermark(self, destination, watermarkConfig).then(function (res) {
-                    if(error) errors.push(error);
-                });
-            });
-            if(errors.length) return response(self, callback, errors);
-        }
-
-        return response(self, callback, null);
+        console.log("PHOTOPACK: photo version ", destination);
+        var errors = processWatermarks(self, destination, formatConfig.watermarks, function(errors) {
+            return response(self, callback, errors);
+        });
     });
 }
 
-function stumpWatermark (self, image, watermarkConfig) {
+function processWatermarks (self, image, watermarks, callback, index, errors) {
+    var errors = [];
+    var index = 0;
+    var processNext = function() {
+        if(!watermarks || !watermarks.length || index >= watermarks.length)
+            return callback && callback(errors.length && errors);
+
+        stumpWatermark(self, image, watermarks, index)
+        .then(function(success, error) {
+            if(error) errors.push(error);
+
+            if(error || ++index == watermarks.length)
+                return callback && callback(errors.length && errors);
+
+            processNext();
+        });
+    };
+    processNext();
+}
+
+function stumpWatermark (self, image, watermarks, index) {
     return new Promise(function (resolve, reject) {
-        if(!self)
+        index = index || 0;
+        if(!self) 
             return reject(e(PhotoPack.ERROR.OBJECTINSTANCE));
 
+        if(!image) 
+            return reject(e(PhotoPack.ERROR.PARAMS, "image"));
+
         var im = self.packconfig.im;
-        if(!image || !watermarkConfig || !im)
+        if(!im)
             return reject(e(PhotoPack.ERROR.WATERMARKCONFIG));
 
-        if(watermarkConfig.img) { // || watermarkConfig.text) {
-            var offsetx = watermarkConfig.x || 0;
-            var offsety = watermarkConfig.y || 0;
-            var w = watermarkConfig.w || 0;
-            var h = watermarkConfig.h || 0;
-            var gravity = watermarkConfig.gravity || "southeast";
-            var dissolve = watermarkConfig.dissolve || 50;
-            var watermark;
-            var geometry = watermarkConfig.img ? "-geometry " + w + "x" + h + "+" + offsetx + "+" + offsety : "";
-            if(watermarkConfig.img)
-                watermark = watermarkConfig.img;
-            else if(watermarkConfig.text)
-                watermark = "-draw \"fill white text 1,1 '" + watermarkConfig.text + "' text 0,0 '" + watermarkConfig.text + "' fill black text -1,-1 '" + watermarkConfig.text + "' \"";
+        if(!watermarks || !watermarks.length || index >= watermarks.length)
+            return reject(e(PhotoPack.ERROR.WATERMARKCONFIG));
 
-            var command = im ? _path.join(im) : "composite";
-            var commandargs = [
-                "convert"
-                , image
-                , watermark
-                , (gravity ? "-gravity " + gravity : "")
-                , geometry
-                , "-compose"
-                , dissolve ? "dissolve -define compose:args=" + dissolve + ",100" : ""
-                , "-composite "
-                , image
-            ];
-            console.log("command : ", command, commandargs.join(" "));
-            var composite = _cmd(command + " " + commandargs.join(" "));
+        var watermark = watermarks[index];
+        var watermarkConfig = watermark && self.packconfig.watermarks[watermark];
+        if(!watermarkConfig)
+            return reject(e(PhotoPack.ERROR.WATERMARKCONFIG, watermark));
 
-            composite.stdout.on('data',function(data) {
-                console.log("PHOTOPACK: error", data);
+        if(!watermarkConfig.img) // && !watermarkConfig.text)
+            return resolve(image);
+
+        console.log("PHOTOPACK: stumping watermark " + watermark + " on " + image + "...");
+        var offsetx = watermarkConfig.x || 0;
+        var offsety = watermarkConfig.y || 0;
+        var w = watermarkConfig.w || 0;
+        var h = watermarkConfig.h || 0;
+        var gravity = watermarkConfig.gravity || "southeast";
+        var dissolve = watermarkConfig.dissolve || 50;
+        var watermark;
+        var geometry = watermarkConfig.img ? "-geometry " + w + "x" + h + "+" + offsetx + "+" + offsety : "";
+        if(watermarkConfig.img)
+            watermark = watermarkConfig.img;
+        else if(watermarkConfig.text)
+            watermark = "-draw \"fill white text 1,1 '" + watermarkConfig.text + "' text 0,0 '" + watermarkConfig.text + "' fill black text -1,-1 '" + watermarkConfig.text + "' \"";
+
+        var command = im ? _path.join(im) : "composite";
+        var commandargs = [
+            "convert"
+            , image
+            , watermark
+            , (gravity ? "-gravity " + gravity : "")
+            , geometry
+            , "-compose"
+            , dissolve ? "dissolve -define compose:args=" + dissolve + ",100" : ""
+            , "-composite "
+            , image
+        ];
+        console.log("PHOTOPACK: command : ", command, commandargs.join(" "));
+        var composite = _cmd(command + " " + commandargs.join(" "));
+
+        composite.stdout.on('data',function(data) {
+            console.log("PHOTOPACK: error", data);
+            return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
+        });
+
+        composite.stderr.on('data',function(data) {
+            console.log("PHOTOPACK: error", data);
+            return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
+        });
+
+        composite.on('close',function(code) {
+            if(code != 0){
+                console.log("PHOTOPACK: composite process exited with code", code);
                 return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
-            });
-
-            composite.stderr.on('data',function(data) {
-                console.log("PHOTOPACK: error", data);
-                return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
-            });
-
-            composite.on('close',function(code) {
-                if(code != 0){
-                    console.log("PHOTOPACK: composite process exited with code", code);
-                    return reject(e(PhotoPack.ERROR.IMPROCCESS, data));
-                } else {
-                    console.log("PHOTOPACK: composite end", code);
-                    return resolve();
-                }
-            });
-        }
+            } else {
+                console.log("PHOTOPACK: composite end", code);
+                return resolve(image);
+            }
+        });
     });
 }
 
