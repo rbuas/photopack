@@ -207,7 +207,13 @@ function printITProgress(message) {
     if(!message || !message.itmax)
         return;
 
-    console.log(":: it ", message.itcurrent, "/", message.itmax, " done - ", message.itpending, " (", (message.remainingtime / 1000).toFixed(2), "s ) to finish");
+    var timeToFinish = (message.remainingtime / 1000);
+    var timeUnit = "s";
+    if(timeToFinish > 60) {
+        timeUnit = "m";
+        timeToFinish = timeToFinish / 60;
+    }
+    console.log(":: it ", message.itcurrent, "/", message.itmax, " done - ", message.itpending, " (", timeToFinish.toFixed(2), timeUnit + " ) to finish");
 
     var progressporcent = 100 * message.itcurrent / message.itmax;
     var progress = "";
