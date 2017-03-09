@@ -19,6 +19,7 @@ module.exports = PhotoPack = {};
 
 PhotoPack.ERROR = {
     INPUTFILE : "Missing input config file to generate packs",
+    INPUTFILE_EXISTS : "Can not found the specified inputfile",
     CONFIGFILE : "Config file error",
     PARAMS : "Missing required params",
     GENPARAMS : "Missing required params to generate photo",
@@ -121,7 +122,10 @@ function readConfig (self) {
     if (!self.configfile)
         return e(PhotoPack.ERROR.INPUTFILE);
 
-    self.packconfig = require(self.configfile);
+    if(!jsext.fileExists(self.configfile))
+        return e(PhotoPack.ERROR.INPUTFILE_EXISTS, self.configfile);
+
+    self.packconfig = jsext.loadJsonFile(self.configfile);
     if(!validateConfig(self.packconfig))
         return e(PhotoPack.ERROR.CONFIGFILE);
 }
@@ -396,7 +400,7 @@ function stumpWatermark (self, image, watermarks, index) {
         console.log("PHOTOPACK: stumping watermark " + watermark + " on " + image + "...");
         var command = im ? im : "magick";
         var commandargs = watermarkConfig.img ? buildWatermarkImageCommand(image, watermarkConfig) : buildWatermarkTextCommand(image, watermarkConfig);
-        console.log("PHOTOPACK: command : ", command, commandargs);
+        //console.log("PHOTOPACK: command : ", command, commandargs);
         var composite = _cmd(command + " " + commandargs);
 
         composite.stdout.on('data',function(data) {
@@ -461,8 +465,8 @@ function buildWatermarkTextCommand (image, watermarkConfig) {
     var fontsize = "-pointsize " + fontsizeValue + " -kerning 1 -size " + w + "x" + h + " xc:none";
     var dissolve = watermarkConfig.dissolve || 50;
     var preOptions = "-stroke black -strokewidth 2 -annotate 0 '" + watermarkConfig.text + "' \
-          -background none -shadow 70x1+0+0 +repage \
-          -stroke none -fill white -annotate 0 '" + watermarkConfig.text + "'";
+          -background none -shadow 60x3+0+0 +repage \
+          -stroke none -fill white -annotate +2+5 '" + watermarkConfig.text + "'";
     var postOptions = "+swap -gravity " + gravity + " -geometry +" + offsetx + "+" + offsety;
     var args = [
         "convert"

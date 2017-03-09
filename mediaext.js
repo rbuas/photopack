@@ -196,7 +196,10 @@ MediaExt.generateVersion = function (filepath, version, destination, callback) {
     }
 
     var sharpfile = _sharp(filepath);
-    if(config.width) sharpfile.resize(config.width);
+    if(config.width) {
+        sharpfile.resize(config.width, config.width);
+        sharpfile.max();
+    }
     sharpfile.jpeg({quality:config.quality || 100});
     sharpfile.withMetadata();
     sharpfile.toFile(destination, function (err, info) {
