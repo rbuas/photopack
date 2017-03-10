@@ -259,24 +259,46 @@ function validCriteria (photo, logic1, criteria1, logic2, criteria2) {
     return resp1 && resp2;
 }
 
-function validCriteriaItem (photo, criteria, value) {
+function validCriteriaItem (photo, criteria, criteriaValue) {
     if(!photo)
         return false;
 
-    if(criteria == undefined || value == undefined)
+    if(criteria == undefined || criteriaValue == undefined)
         return true;
 
     var photoCriteria = photo[criteria];
     if(!photoCriteria)
         return false;
 
-    switch(criteria.key) {
+    switch(criteriaValue) {
         case("tags") : 
-            return photoCriteria.indexOf(criteria.value) >= 0;
+            return hasAnyCriteria(photoCriteria, criteriaValue);
         case("authorrating") : 
-            return photoCriteria == criteria.value;
+            return hasAnyValue(photoCriteria, criteriaValue);
         default:
             return false;
+    }
+}
+
+function hasAnyCriteria (props, search) {
+    if(Array.isArray(search)) {
+        return search.reduce(function(any, p) {
+            any = any || props.indexOf(p) >= 0;
+            return any;
+        }, false);
+    } else {
+        return props.indexOf(search) >= 0;
+    }
+}
+
+function hasAnyValue (prop, search) {
+    if(Array.isArray(search)) {
+        return search.reduce(function(any, p) {
+            any = any || prop == p;
+            return any;
+        }, false);
+    } else {
+        return prop == search;
     }
 }
 

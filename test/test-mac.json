@@ -6,49 +6,33 @@
     "formats" : {
         "hdclean-best" : {
             "criterialogic" : "or",
-            "criteria" : [
-                {"authorrating":5},
-                {"authorrating":4}
-            ]
+            "criteria" : {"authorrating":[4, 5]}
         },
         "hdclean" : {
             "criterialogic" : "or",
-            "criteria" : [
-                {"authorrating":3},
-                {"authorrating":2}
-            ]
+            "criteria" : {"authorrating":[3, 2]}
         },
         "web-best" : {
             "width" : 2048,
             "watermarks" : ["pdl2017-rbuas", "pdl2017-logo", "rbuas-logo"],
             "criterialogic" : "or",
-            "criteria" : [
-                {"authorrating":4}
-            ]
+            "criteria" : {"authorrating":[4, 5]}
         },
         "web" : {
             "width" : 2048,
             "watermarks" : ["pdl2017-rbuas", "pdl2017-logo", "rbuas-logo"],
             "criterialogic" : "or",
-            "criteria" : [
-                {"authorrating":3},
-                {"authorrating":2}
-            ]
+            "criteria" : {"authorrating":[3, 2]}
         },
         "webclean-best" : {
             "width" : 2048,
             "criterialogic" : "or",
-            "criteria" : [
-                {"authorrating":4}
-            ]
+            "criteria" : {"authorrating":[4, 5]}
         },
         "webclean" : {
             "width" : 2048,
             "criterialogic" : "or",
-            "criteria" : [
-                {"authorrating":3},
-                {"authorrating":2}
-            ]
+            "criteria" : {"authorrating":[3, 2]}
         }
     },
     "watermarks" : {
@@ -93,7 +77,7 @@
         "rbuas-portfolio" : { 
             "criterialogic" : "and", 
             "criteria" : {
-                "tags":"rbuas",
+                "tags":["rbuas", "RBuas", "RBUAS"],
                 "authorrating":4
             }
         },
