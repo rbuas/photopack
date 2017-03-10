@@ -236,20 +236,22 @@ function validCriteria (photo, logic1, criteria1, logic2, criteria2) {
     logic1 = logic1 && logic1.toLowerCase() || "or";
     logic2 = logic2 && logic2.toLowerCase() || "or";
 
-    var resp1 = (!criteria1 || !criteria1.length) ? true : criteria1.reduce(function(resp, criteria, index) {
+    var criteria1Keys = Object.keys(criteria1);
+    var resp1 = (!criteria1 || !criteria1Keys.length) ? true : criteria1Keys.reduce(function(resp, criteria, index) {
         if(logic1 == "and") {
-            resp = resp && validCriteriaItem(photo, criteria);
+            resp = resp && validCriteriaItem(photo, criteria, criteria1[criteria]);
         } else if( logic1 == "or") {
             resp = resp || validCriteriaItem(photo, criteria);
         }
         return resp;
     }, logic1 == "and" ? true : false);
 
-    var resp2 = (!criteria2 || !criteria2.length) ? true : criteria2.reduce(function(resp, criteria, index) {
+    var criteria2Keys = Object.keys(criteria2);
+    var resp2 = (!criteria2 || !criteria2Keys.length) ? true : criteria2.reduce(function(resp, criteria, index) {
         if(logic2 == "and") {
-            resp = resp && validCriteriaItem(photo, criteria);
+            resp = resp && validCriteriaItem(photo, criteria, criteria2[criteria]);
         } else if(logic2 == "or") {
-            resp = resp || validCriteriaItem(photo, criteria);
+            resp = resp || validCriteriaItem(photo, criteria, criteria2[criteria]);
         }
         return resp;
     }, logic2 == "and" ? true : false);
@@ -257,14 +259,14 @@ function validCriteria (photo, logic1, criteria1, logic2, criteria2) {
     return resp1 && resp2;
 }
 
-function validCriteriaItem (photo, criteria) {
+function validCriteriaItem (photo, criteria, value) {
     if(!photo)
         return false;
 
-    if(!criteria || !criteria.key || criteria.value == undefined)
+    if(criteria == undefined || value == undefined)
         return true;
 
-    var photoCriteria = photo[criteria.key];
+    var photoCriteria = photo[criteria];
     if(!photoCriteria)
         return false;
 

@@ -7,15 +7,15 @@
         "hdclean-best" : {
             "criterialogic" : "or",
             "criteria" : [
-                {"key":"authorrating", "value":5},
-                {"key":"authorrating", "value":4}
+                {"authorrating":5},
+                {"authorrating":4}
             ]
         },
         "hdclean" : {
             "criterialogic" : "or",
             "criteria" : [
-                {"key":"authorrating", "value":3},
-                {"key":"authorrating", "value":2}
+                {"authorrating":3},
+                {"authorrating":2}
             ]
         },
         "web-best" : {
@@ -23,7 +23,7 @@
             "watermarks" : ["pdl2017-rbuas", "pdl2017-logo", "rbuas-logo"],
             "criterialogic" : "or",
             "criteria" : [
-                {"key":"authorrating", "value":4}
+                {"authorrating":4}
             ]
         },
         "web" : {
@@ -31,23 +31,23 @@
             "watermarks" : ["pdl2017-rbuas", "pdl2017-logo", "rbuas-logo"],
             "criterialogic" : "or",
             "criteria" : [
-                {"key":"authorrating", "value":3},
-                {"key":"authorrating", "value":2}
+                {"authorrating":3},
+                {"authorrating":2}
             ]
         },
         "webclean-best" : {
             "width" : 2048,
             "criterialogic" : "or",
             "criteria" : [
-                {"key":"authorrating", "value":4}
+                {"authorrating":4}
             ]
         },
         "webclean" : {
             "width" : 2048,
             "criterialogic" : "or",
             "criteria" : [
-                {"key":"authorrating", "value":3},
-                {"key":"authorrating", "value":2}
+                {"authorrating":3},
+                {"authorrating":2}
             ]
         }
     },
@@ -84,27 +84,25 @@
     }, 
     "packs" : {
         "all" : { 
-            "criteria" : [
-            ]
         },
         "LunaOrnellas" : { 
-            "criteria" : [
-                {"key":"tags", "value":"Luna Ornellas"}
-            ]
+            "criteria" : {
+                "tags":"Luna Ornellas"
+            }
         },
         "rbuas-portfolio" : { 
             "criterialogic" : "and", 
-            "criteria" : [
-                {"key":"tags", "value":"rbuas"},
-                {"key":"authorrating", "value":4}
-            ]
+            "criteria" : {
+                "tags":"rbuas",
+                "authorrating":4
+            }
         },
         "rbuas-site" : { 
             "criterialogic" : "and", 
-            "criteria" : [
-                {"key":"tags", "value":"rbuas"},
-                {"key":"authorrating", "value":5}
-            ]
+            "criteria" : {
+                "tags":"rbuas",
+                "authorrating":5
+            }
         }
     }
 }
