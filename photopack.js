@@ -220,7 +220,7 @@ function filterPhotos (photos, logic1, criteria1, logic2, criteria2) {
     if(!photos)
         return [];
 
-    if((!criteria1 || !criteria1.length) && (!criteria2 || !criteria2.length))
+    if(!criteria1 && !criteria2)
         return photos;
 
     var filteredPhotos = jsext.filterObject(photos, function(photoid, photoinfo) {
@@ -236,18 +236,18 @@ function validCriteria (photo, logic1, criteria1, logic2, criteria2) {
     logic1 = logic1 && logic1.toLowerCase() || "or";
     logic2 = logic2 && logic2.toLowerCase() || "or";
 
-    var criteria1Keys = Object.keys(criteria1);
+    var criteria1Keys = criteria1 && Object.keys(criteria1) || [];
     var resp1 = (!criteria1 || !criteria1Keys.length) ? true : criteria1Keys.reduce(function(resp, criteria, index) {
         if(logic1 == "and") {
             resp = resp && validCriteriaItem(photo, criteria, criteria1[criteria]);
         } else if( logic1 == "or") {
-            resp = resp || validCriteriaItem(photo, criteria);
+            resp = resp || validCriteriaItem(photo, criteria, criteria1[criteria]);
         }
         return resp;
     }, logic1 == "and" ? true : false);
 
-    var criteria2Keys = Object.keys(criteria2);
-    var resp2 = (!criteria2 || !criteria2Keys.length) ? true : criteria2.reduce(function(resp, criteria, index) {
+    var criteria2Keys = criteria2 && Object.keys(criteria2) || [];
+    var resp2 = (!criteria2 || !criteria2Keys.length) ? true : criteria2Keys.reduce(function(resp, criteria, index) {
         if(logic2 == "and") {
             resp = resp && validCriteriaItem(photo, criteria, criteria2[criteria]);
         } else if(logic2 == "or") {
@@ -270,7 +270,7 @@ function validCriteriaItem (photo, criteria, criteriaValue) {
     if(!photoCriteria)
         return false;
 
-    switch(criteriaValue) {
+    switch(criteria) {
         case("tags") : 
             return hasAnyCriteria(photoCriteria, criteriaValue);
         case("authorrating") : 

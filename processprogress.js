@@ -209,7 +209,10 @@ function printITProgress(message) {
 
     var timeToFinish = (message.remainingtime / 1000);
     var timeUnit = "s";
-    if(timeToFinish > 60) {
+    if (timeToFinish > 3600) {
+        timeUnit = "h";
+        timeToFinish = timeToFinish / 3600;
+    } else if(timeToFinish > 60) {
         timeUnit = "m";
         timeToFinish = timeToFinish / 60;
     }

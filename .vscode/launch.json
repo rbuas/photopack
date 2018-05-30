@@ -26,6 +26,17 @@
         },
         {
             "type": "node",
+            "request": "launch",
+            "name": "Photopack PDL",
+            //"stopOnEntry": true,
+            "program": "${workspaceRoot}/pp.js",
+            "cwd": "${workspaceRoot}",
+            "args":[
+                "/Users/rbuas/RBUAS/20170129-PrixDeLausanne/photopack.json"
+            ]
+        },
+        {
+            "type": "node",
             "request": "attach",
             "name": "Attacher au processus",
             "port": 5858

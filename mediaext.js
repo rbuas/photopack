@@ -135,7 +135,12 @@ MediaExt.readFileinfo = function (mediafile, callback) {
 
     var filecreation = stats.birthtime;
 
-    var dimensions = _imagesize(mediafile);
+    try {
+        var dimensions = _imagesize(mediafile);
+    } catch(e) {
+        console.log("MEDIAEXT::ERROR: can not read image dimensions of ", mediafile);
+    }
+
     var width = dimensions && dimensions.width;
     var height = dimensions && dimensions.height;
     var orientation = width && height && width > height ? "L" : "P";
